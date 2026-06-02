@@ -12,6 +12,8 @@ import com.bookme.bookme_api.dto.user.UserRequestDTO;
 import com.bookme.bookme_api.dto.user.UserResponseDTO;
 import com.bookme.bookme_api.entity.UserEntity;
 import com.bookme.bookme_api.enums.Role;
+import com.bookme.bookme_api.exception.DuplicateResourceException;
+import com.bookme.bookme_api.exception.ResourceNotFoundException;
 import com.bookme.bookme_api.mapper.UserMapper;
 import com.bookme.bookme_api.repository.UserRepository;
 
@@ -29,12 +31,13 @@ public class UserService {
     public UserResponseDTO createUser(UserRequestDTO dto){
 
         if(userRepo.findByEmail(dto.getEmail()).isPresent()){
-            throw new RuntimeException("ya hay un usuario registrado con ese email");
+            throw new DuplicateResourceException("Email already exists");
 
         }
         
         UserEntity entity = userMapper.toEntity(dto);
         entity.setRole(Role.CLIENTE);
+        entity.setActive(true);
         //Solo seteo el rol, por que el id y la fecha se hacen de forma automatica
         UserEntity inserted = userRepo.save(entity);
         return userMapper.toResponseDTO(inserted);
@@ -44,8 +47,8 @@ public class UserService {
 
    public UserResponseDTO getById(Long id){
         UserEntity entity = userRepo.findById(id).
-        orElseThrow(()-> new RuntimeException(
-            "Usuario no encontrado"));
+        orElseThrow(()-> new ResourceNotFoundException(
+            "User not found"));
         
             return userMapper.toResponseDTO(entity);
 
@@ -54,21 +57,24 @@ public class UserService {
 
 
    public Page<UserResponseDTO> getAll(int page, int size){
-        Pageable pageable = PageRequest.of(page, size); 
+        Pageable pageable = PageRequest.of(page, size);
 
-        return userRepo.findAll(pageable).
-        map(userMapper::toResponseDTO);
+            return userRepo.findByActiveTrue(pageable)
+            .map(userMapper::toResponseDTO);
    }
 
    public UserResponseDTO update(Long id, UserRequestDTO dto){
     
         UserEntity entity = userRepo.findById(id)
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        if(!entity.isActive()){
+            throw new ResourceNotFoundException("User is not active");
+        }
         Optional<UserEntity> emailUser = userRepo.findByEmail(dto.getEmail());
 
         if(emailUser.isPresent() && !emailUser.get().getId().equals(id)){
-            throw new RuntimeException("No se puede actualizar el email, ya existe un usuario con ese email");
+            throw new DuplicateResourceException("email already exists");
         }
         //recordar que el repositorio no tiene un update
 
@@ -83,6 +89,17 @@ public class UserService {
         
    }
 
+   public void deactivate(Long id){
+        UserEntity entity = userRepo.findById(id).
+        orElseThrow(()-> new ResourceNotFoundException("User not found"));
+        //cambio el estado a inactivo
+        if(!entity.isActive()){
+            throw new ResourceNotFoundException("User already deactivated");
+            }
+        entity.setActive(false);
+        userRepo.save(entity);
+   }
+
 //Este método lo cambiaré para hacer un soft, poner el atributo de active en el aentidad
    /***  public void delete(Long id){
         UserEntity entity = userRepo.findById(id).
@@ -92,5 +109,6 @@ public class UserService {
         
    }
 */
+
 
 }
