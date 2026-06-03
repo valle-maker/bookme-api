@@ -15,6 +15,22 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+        @ExceptionHandler(InvalidOperationException.class)
+public ResponseEntity<ErrorResponseDTO> handleInvalidOperation(
+        InvalidOperationException ex,
+        HttpServletRequest request) {
+
+    ErrorResponseDTO error = ErrorResponseDTO.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(ex.getMessage())
+            .path(request.getRequestURI())
+            .build();
+
+    return ResponseEntity.badRequest().body(error);
+}
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponseDTO> handleResourceNotFound(
             ResourceNotFoundException ex,

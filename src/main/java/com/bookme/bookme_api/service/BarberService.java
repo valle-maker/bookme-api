@@ -10,6 +10,7 @@ import com.bookme.bookme_api.entity.BarberEntity;
 import com.bookme.bookme_api.entity.UserEntity;
 import com.bookme.bookme_api.enums.Role;
 import com.bookme.bookme_api.exception.DuplicateResourceException;
+import com.bookme.bookme_api.exception.InvalidOperationException;
 import com.bookme.bookme_api.exception.ResourceNotFoundException;
 import com.bookme.bookme_api.mapper.BarberMapper;
 import com.bookme.bookme_api.repository.BarberRepository;
@@ -30,18 +31,18 @@ public class BarberService {
         orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         if(!userEntity.isActive()){
-            throw new RuntimeException("User disavaliable"); //Manejar bien esta excepción
+            throw new InvalidOperationException("User unavailable"); //Manejar bien esta excepción
         }
 
         if(userEntity.getRole() != Role.BARBER){
-            throw new RuntimeException("User is not a barber"); //Manejar tambien esta excepcion
+            throw new InvalidOperationException("User is not a barber"); //Manejar tambien esta excepcion
         }
         if(barberRepo.findByUser(userEntity).isPresent()){
             throw new DuplicateResourceException(
                 "This user is already a barber");
             }
-        if(dto.getWorkStartTime().isAfter(dto.getWorkEndTime())){
-            throw new RuntimeException( //Manejar esta excepción
+        if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
+            throw new InvalidOperationException( //Manejar esta excepción
             "La hora de inicio debe ser anterior a la hora de fin");
             }
         BarberEntity barberEntity = barberMapper.toEntity(dto);
@@ -71,10 +72,10 @@ public class BarberService {
             orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
         
         if(!entity.isActive()){
-            throw new ResourceNotFoundException("Barber is not active");
+            throw new InvalidOperationException("Barber is not active");
         }
         if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
-        throw new RuntimeException(
+        throw new InvalidOperationException(
             "La hora de inicio debe ser anterior a la hora de fin");
             }
 
@@ -93,7 +94,7 @@ public class BarberService {
             orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
         
         if(!entity.isActive()){
-            throw new ResourceNotFoundException("User already deactivated");
+            throw new InvalidOperationException("Barber already deactivated");
         }
 
         entity.setActive(false);
