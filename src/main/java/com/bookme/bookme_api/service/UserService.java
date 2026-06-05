@@ -100,15 +100,7 @@ public class UserService {
         userRepo.save(entity);
    }
 
-//Este método lo cambiaré para hacer un soft, poner el atributo de active en la entidad
-   /***  public void delete(Long id){
-        UserEntity entity = userRepo.findById(id).
-        orElseThrow(()-> new RuntimeException("User not found"));
 
-        userRepo.delete(entity);
-        
-   }
-*/
 
 
 }
