@@ -1,8 +1,6 @@
 package com.bookme.bookme_api.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -50,13 +48,10 @@ public class AppointmentEntity {
     private BarberServiceEntity service;
 
     @Column(nullable = false)
-    private LocalDate appointmentDate;
+    private LocalDateTime startDateTime;
 
     @Column(nullable = false)
-    private LocalTime startTime;
-
-    @Column(nullable = false)
-    private LocalTime endTime;
+    private LocalDateTime endDateTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

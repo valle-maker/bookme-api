@@ -14,7 +14,8 @@ public interface AppointmentMapper {
     @Mapping(target = "client", ignore = true)
     @Mapping(target = "barber", ignore = true)
     @Mapping(target = "service", ignore = true)
-    @Mapping(target = "endTime", ignore = true)
+    @Mapping(target = "startDateTime", expression = "java(dto.getAppointmentDate().atTime(dto.getStartTime()))")
+    @Mapping(target = "endDateTime", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     AppointmentEntity toEntity(AppointmentRequestDTO dto);
@@ -25,5 +26,8 @@ public interface AppointmentMapper {
     @Mapping(target = "barberName", source = "barber.user.name")
     @Mapping(target = "serviceId", source = "service.id")
     @Mapping(target = "serviceName", source = "service.name")
+    @Mapping(target = "appointmentDate", expression = "java(entity.getStartDateTime().toLocalDate())")
+    @Mapping(target = "startTime", expression = "java(entity.getStartDateTime().toLocalTime())")
+    @Mapping(target = "endTime", expression = "java(entity.getEndDateTime().toLocalTime())")
     AppointmentResponseDTO toResponseDTO(AppointmentEntity entity);
 }
