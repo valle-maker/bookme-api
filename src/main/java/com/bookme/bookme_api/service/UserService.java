@@ -56,12 +56,11 @@ public class UserService {
 
 
 
-   public Page<UserResponseDTO> getAll(int page, int size){
-        Pageable pageable = PageRequest.of(page, size);
+   public Page<UserResponseDTO> getAll(Pageable pageable) {
 
-            return userRepo.findByActiveTrue(pageable)
+        return userRepo.findByActiveTrue(pageable)
             .map(userMapper::toResponseDTO);
-   }
+        }
 
    public UserResponseDTO update(Long id, UserRequestDTO dto){
     
