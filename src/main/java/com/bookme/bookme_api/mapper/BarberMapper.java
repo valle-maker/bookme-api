@@ -12,8 +12,6 @@ import com.bookme.bookme_api.entity.BarberEntity;
 public interface BarberMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "user", ignore = true)
-    @Mapping(target = "workStartTime", ignore = true)
-    @Mapping(target = "workEndTime", ignore = true)
     @Mapping(target = "active", ignore = true)
     
     BarberEntity toEntity(BarberRequestDTO dto);

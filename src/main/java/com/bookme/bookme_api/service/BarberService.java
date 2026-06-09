@@ -1,7 +1,7 @@
 package com.bookme.bookme_api.service;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.bookme.bookme_api.dto.barber.BarberRequestDTO;
@@ -60,9 +60,7 @@ public class BarberService {
             return barberMapper.toResponseDTO(entity);
     }
 
-    public Page<BarberResponseDTO> getAllActive(int page, int size){
-        PageRequest pageable = PageRequest.of(page, size);
-
+    public Page<BarberResponseDTO> getAllActive(Pageable pageable){
         return barberRepo.findByActiveTrue(pageable)
             .map(barberMapper::toResponseDTO);
     }

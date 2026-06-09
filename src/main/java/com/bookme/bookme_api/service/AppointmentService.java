@@ -3,7 +3,10 @@ package com.bookme.bookme_api.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.bookme.bookme_api.dto.appointment.AppointmentRequestDTO;
 import com.bookme.bookme_api.dto.appointment.AppointmentResponseDTO;
@@ -76,18 +79,26 @@ public class AppointmentService {
     }
 
 
-    public List<AppointmentResponseDTO> findByBarberIdAndStartDateTimeBetween(Long barberId, LocalDateTime start, LocalDateTime end) {
+    public Page<AppointmentResponseDTO> findByBarberIdAndStartDateTimeBetween(
+        Long barberId,
+        LocalDateTime start,
+        LocalDateTime end,
+        Pageable pageable) {
+
         validateDateRange(start, end);
 
         barberRepository.findById(barberId)
-            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+        .orElseThrow(() ->
+            new ResourceNotFoundException("Barber not found"));
 
         return appointmentRepository
-            .findByBarberIdAndStartDateTimeBetween(barberId, start, end)
-            .stream()
-            .map(appointmentMapper::toResponseDTO)
-            .toList();
-    }
+            .findByBarberIdAndStartDateTimeBetween(
+             barberId,
+                 start,
+                end,
+                pageable)
+            .map(appointmentMapper::toResponseDTO);
+        }
 
     private void validateDateRange(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) {
@@ -110,7 +121,7 @@ public class AppointmentService {
             throw new InvalidOperationException("Only scheduled appointments can be cancelled");
         }
     
-    
+        entity.setStatus(Status.CANCELLED);
         AppointmentEntity updated = appointmentRepository.save(entity);
         return appointmentMapper.toResponseDTO(updated);
     }
