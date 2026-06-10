@@ -31,19 +31,19 @@ public class BarberService {
         orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         if(!userEntity.isActive()){
-            throw new InvalidOperationException("User unavailable"); //Manejar bien esta excepción
+            throw new InvalidOperationException("User unavailable"); 
         }
 
         if(userEntity.getRole() != Role.BARBER){
-            throw new InvalidOperationException("User is not a barber"); //Manejar tambien esta excepcion
+            throw new InvalidOperationException("User is not a barber"); 
         }
         if(barberRepo.findByUser(userEntity).isPresent()){
             throw new DuplicateResourceException(
                 "This user is already a barber");
             }
         if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
-            throw new InvalidOperationException( //Manejar esta excepción
-            "La hora de inicio debe ser anterior a la hora de fin");
+            throw new InvalidOperationException( 
+            "Start time must be befrore end time");
             }
         BarberEntity barberEntity = barberMapper.toEntity(dto);
         barberEntity.setUser(userEntity);
@@ -74,7 +74,7 @@ public class BarberService {
         }
         if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
         throw new InvalidOperationException(
-            "La hora de inicio debe ser anterior a la hora de fin");
+            "Start time must be before end time");
             }
 
         entity.setSpecialities(dto.getSpecialities());

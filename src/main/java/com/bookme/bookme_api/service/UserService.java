@@ -37,7 +37,6 @@ public class UserService {
         UserEntity entity = userMapper.toEntity(dto);
         entity.setRole(Role.CLIENTE);
         entity.setActive(true);
-        //Solo seteo el rol, por que el id y la fecha se hacen de forma automatica
         UserEntity inserted = userRepo.save(entity);
         return userMapper.toResponseDTO(inserted);
     }

@@ -11,10 +11,6 @@ public class BarberResponseDTO {
 
     private Long id;
 
-    private Long userId;
-
-    private String barberName;
-
     private String specialities;
 
     private LocalTime workStartTime;

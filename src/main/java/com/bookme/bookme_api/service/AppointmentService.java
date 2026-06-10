@@ -1,12 +1,11 @@
 package com.bookme.bookme_api.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
+
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.bookme.bookme_api.dto.appointment.AppointmentRequestDTO;
 import com.bookme.bookme_api.dto.appointment.AppointmentResponseDTO;
