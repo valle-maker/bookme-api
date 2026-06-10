@@ -30,7 +30,7 @@ import lombok.Setter;
 @NoArgsConstructor
 
 public class UserEntity {
-    //Recordar que hay que ponerle los atributos a los atributos
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -1,8 +1,12 @@
 package com.bookme.bookme_api.dto.user;
 
+
+
+import com.bookme.bookme_api.enums.Role;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,5 +29,8 @@ public class UserRequestDTO {
     @Size(max= 100)
     @NotBlank
     private String phone;
+
+    @NotNull
+    private Role role;
 
 }

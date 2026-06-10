@@ -91,7 +91,7 @@ public ResponseEntity<ErrorResponseDTO> handleInvalidOperation(
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase())
-                .message("Error interno del servidor")
+                .message("Internal server error")
                 .path(request.getRequestURI())
                 .build();
 

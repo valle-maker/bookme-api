@@ -3,7 +3,7 @@ package com.bookme.bookme_api.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bookme.bookme_api.dto.barberService.BarberServiceRequestDTO;
 import com.bookme.bookme_api.dto.barberService.BarberServiceResponseDTO;
@@ -22,6 +22,8 @@ public class ServiceService {
     private final BarberServiceRepository serviceRepo;
     private final BarberServiceMapper serviceMapper;
 
+
+    @Transactional
     public BarberServiceResponseDTO create(BarberServiceRequestDTO dto){
         BarberServiceEntity entity = serviceMapper.toEntity(dto);
         entity.setActive(true);
@@ -44,6 +46,8 @@ public class ServiceService {
     .map(serviceMapper::toResponseDTO);
         }
 
+
+    @Transactional
     public BarberServiceResponseDTO update(Long id, BarberServiceRequestDTO dto){
         BarberServiceEntity entity = serviceRepo.findById(id).
             orElseThrow(()-> new ResourceNotFoundException("Service not found"));
@@ -59,6 +63,7 @@ public class ServiceService {
         return serviceMapper.toResponseDTO(updated);
     }
 
+    @Transactional
     public void deactivate(Long id){
         BarberServiceEntity entity = serviceRepo.findById(id).
             orElseThrow(()-> new ResourceNotFoundException("Service not found"));

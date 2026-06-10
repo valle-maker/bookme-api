@@ -3,6 +3,7 @@ package com.bookme.bookme_api.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bookme.bookme_api.dto.barber.BarberRequestDTO;
 import com.bookme.bookme_api.dto.barber.BarberResponseDTO;
@@ -26,6 +27,8 @@ public class BarberService {
     private final BarberMapper barberMapper;
     private final UserRepository userRepo;
 
+
+    @Transactional
     public BarberResponseDTO create(BarberRequestDTO dto){
         UserEntity userEntity = userRepo.findById(dto.getUserId()).
         orElseThrow(()-> new ResourceNotFoundException("User not found"));
@@ -43,7 +46,7 @@ public class BarberService {
             }
         if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
             throw new InvalidOperationException( 
-            "Start time must be befrore end time");
+            "Start time must be before end time");
             }
         BarberEntity barberEntity = barberMapper.toEntity(dto);
         barberEntity.setUser(userEntity);
@@ -65,6 +68,7 @@ public class BarberService {
             .map(barberMapper::toResponseDTO);
     }
 
+    @Transactional
     public BarberResponseDTO update(Long id, BarberRequestDTO dto){
         BarberEntity entity = barberRepo.findById(id).
             orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
@@ -87,6 +91,7 @@ public class BarberService {
 
     }
 
+    @Transactional
     public void deactivate(Long id){
         BarberEntity entity = barberRepo.findById(id).
             orElseThrow(()-> new ResourceNotFoundException("Barber not found"));

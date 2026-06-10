@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.bookme.bookme_api.dto.appointment.AppointmentRequestDTO;
 import com.bookme.bookme_api.dto.appointment.AppointmentResponseDTO;
@@ -35,6 +36,7 @@ public class AppointmentService {
     private final BarberRepository barberRepository;
     private final BarberServiceRepository barberServiceRepository;
 
+    @Transactional
     public AppointmentResponseDTO create(AppointmentRequestDTO dto){
         UserEntity userEntity = userRepository.findById(dto.getClientId()).
             orElseThrow(()-> new ResourceNotFoundException("User not found"));
@@ -108,7 +110,8 @@ public class AppointmentService {
         }
     }
 
-    public AppointmentResponseDTO cancel(Long id){
+    @Transactional
+    public void cancel(Long id){
         AppointmentEntity entity = appointmentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
     
@@ -121,8 +124,8 @@ public class AppointmentService {
         }
     
         entity.setStatus(Status.CANCELLED);
-        AppointmentEntity updated = appointmentRepository.save(entity);
-        return appointmentMapper.toResponseDTO(updated);
+        appointmentRepository.save(entity);
+        
     }
 
 }

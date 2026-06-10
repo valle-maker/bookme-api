@@ -14,7 +14,9 @@ public interface BarberMapper {
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "active", ignore = true)
     
+    
     BarberEntity toEntity(BarberRequestDTO dto);
+    @Mapping(target = "barberName", source = "user.name")
     BarberResponseDTO toResponseDTO(BarberEntity entity); 
 
 }
