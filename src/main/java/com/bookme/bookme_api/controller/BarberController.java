@@ -1,4 +1,4 @@
-package com.bookme.bookme_api.control;
+package com.bookme.bookme_api.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

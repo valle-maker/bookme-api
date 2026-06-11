@@ -53,23 +53,32 @@ public class AppointmentService {
         BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId()).
             orElseThrow(()-> new ResourceNotFoundException("Service not found"));
 
+        
         if(!barberServiceEntity.isActive()){
         throw new InvalidOperationException("Service is not active");
             }
-
         
+        LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
+        LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+        if(appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
+            barberEntity.getId(),
+            Status.SCHEDULED,
+            endTime,
+            startTime)){
+                throw new InvalidOperationException("Barber already has an appointment during this time slot");
+            }
 
         AppointmentEntity entity = appointmentMapper.toEntity(dto);
+        
         entity.setClient(userEntity);
         entity.setBarber(barberEntity);
         entity.setService(barberServiceEntity);
         entity.setStatus(Status.SCHEDULED);
-        entity.setStartDateTime(dto.getAppointmentDate().atTime(dto.getStartTime()));
-        entity.setEndDateTime(entity.getStartDateTime().plusMinutes(barberServiceEntity.getDurationMinutes()));
+        entity.setStartDateTime(startTime);
+        entity.setEndDateTime(endTime);
 
         AppointmentEntity created = appointmentRepository.save(entity);
         return appointmentMapper.toResponseDTO(created);
-
 
     }
     

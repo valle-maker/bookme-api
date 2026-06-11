@@ -1,6 +1,8 @@
 package com.bookme.bookme_api.repository;
 
+
 import java.time.LocalDateTime;
+
 
 
 import org.springframework.data.domain.Page;
@@ -8,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.bookme.bookme_api.entity.AppointmentEntity;
+import com.bookme.bookme_api.enums.Status;
 
 public interface AppointmentRepository extends JpaRepository<AppointmentEntity, Long>{
     Page<AppointmentEntity> findByBarberIdAndStartDateTimeBetween(
@@ -15,4 +18,10 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         LocalDateTime start,
         LocalDateTime end,
         Pageable pageable);
+    
+    boolean existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
+        Long barberId, 
+        Status status,
+        LocalDateTime newEnd,
+        LocalDateTime newStart );
 }
