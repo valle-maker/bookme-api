@@ -141,6 +141,13 @@ public class AppointmentService {
         if(entity.getStatus() != Status.SCHEDULED){
             throw new InvalidOperationException("Only scheduled appointments can be cancelled");
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime appointmentStart = entity.getStartDateTime();
+        
+        if(appointmentStart.isBefore(now.plusHours(1))){
+            throw new InvalidOperationException("Cannot cancel less than 1 hour before the appointment");
+        }
     
         entity.setStatus(Status.CANCELLED);
         appointmentRepository.save(entity);
