@@ -1,7 +1,7 @@
 package com.bookme.bookme_api.service;
 
 import java.time.LocalDateTime;
-
+import java.time.LocalTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -49,6 +49,8 @@ public class AppointmentService {
         if(!barberEntity.isActive()){
         throw new InvalidOperationException("Barber is not active");
             }
+        
+        
 
         BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId()).
             orElseThrow(()-> new ResourceNotFoundException("Service not found"));
@@ -60,6 +62,14 @@ public class AppointmentService {
         
         LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
         LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+        
+        LocalTime appointmentStart = startTime.toLocalTime(); 
+        LocalTime appointmentEnd = endTime.toLocalTime();
+
+        if(appointmentStart.isBefore(barberEntity.getWorkStartTime()) || appointmentEnd.isAfter(barberEntity.getWorkEndTime())){
+            throw new InvalidOperationException("Appointment is outside barber's working hours");
+        }
+
         if(appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
             barberEntity.getId(),
             Status.SCHEDULED,
