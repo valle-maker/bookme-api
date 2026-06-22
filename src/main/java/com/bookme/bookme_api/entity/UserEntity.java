@@ -58,4 +58,7 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean active;
 
+    @Column(nullable = false)
+    private String password;
+
 }
