@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,18 +33,21 @@ public class BarberServiceController {
     private final ServiceService barberServiceService;
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
     public ResponseEntity<BarberServiceResponseDTO> findById(@PathVariable Long id){
         BarberServiceResponseDTO response = barberServiceService.getById(id);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BarberServiceResponseDTO> create(@Valid @RequestBody BarberServiceRequestDTO dto){
         BarberServiceResponseDTO response = barberServiceService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
     public ResponseEntity<Page<BarberServiceResponseDTO>> getAll(
         Pageable pageable) {
 
@@ -54,12 +58,14 @@ public class BarberServiceController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BarberServiceResponseDTO> update(@PathVariable Long id, @Valid @RequestBody BarberServiceRequestDTO dto ){
         BarberServiceResponseDTO response = barberServiceService.update(id, dto);
         return ResponseEntity.ok(response); 
     } 
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivate(@PathVariable Long id){
         barberServiceService.deactivate(id);
         return ResponseEntity.noContent().build();

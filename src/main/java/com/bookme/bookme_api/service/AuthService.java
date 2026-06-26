@@ -8,6 +8,7 @@ import com.bookme.bookme_api.dto.auth.AuthResponseDTO;
 import com.bookme.bookme_api.dto.auth.LoginRequestDTO;
 import com.bookme.bookme_api.dto.auth.RegisterRequestDTO;
 import com.bookme.bookme_api.entity.UserEntity;
+import com.bookme.bookme_api.enums.Role;
 import com.bookme.bookme_api.exception.DuplicateResourceException;
 import com.bookme.bookme_api.exception.InvalidOperationException;
 import com.bookme.bookme_api.repository.UserRepository;
@@ -35,7 +36,7 @@ public class AuthService {
                 .email(dto.getEmail())
                 .phone(dto.getPhone())
                 .password(passwordEncoder.encode(dto.getPassword()))
-                .role(dto.getRole())
+                .role(Role.CLIENT)
                 .active(true)
                 .build();
 

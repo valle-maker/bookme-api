@@ -127,7 +127,7 @@ The API will be available at `http://localhost:8080`.
 ## Roadmap
 
 - [X] Unit and integration tests (JUnit 5 + Mockito)
-- [ ] Authentication and authorization (Spring Security + JWT)
+- [X] Authentication and authorization (Spring Security + JWT)
 - [ ] API documentation (Swagger / OpenAPI)
 - [ ] Docker containerization
 - [ ] Cloud deployment

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -81,6 +82,19 @@ public ResponseEntity<ErrorResponseDTO> handleInvalidOperation(
         return ResponseEntity.badRequest()
                 .body(errors);
     }
+
+        @ExceptionHandler(org.springframework.security.authorization.AuthorizationDeniedException.class)
+        public ResponseEntity<ErrorResponseDTO> handleAccessDenied(
+                AuthorizationDeniedException ex, HttpServletRequest request) {
+        ErrorResponseDTO error = ErrorResponseDTO.builder()
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.FORBIDDEN.value())
+            .error(HttpStatus.FORBIDDEN.getReasonPhrase())
+            .message("You don't have permission to access this resource")
+            .path(request.getRequestURI())
+            .build();
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDTO> handleGenericException(

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,7 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
     public ResponseEntity<AppointmentResponseDTO> findById(@PathVariable Long id){
         AppointmentResponseDTO response = appointmentService.getById(id);
         return ResponseEntity.ok(response);
@@ -43,12 +45,14 @@ public class AppointmentController {
     }
 
     @PostMapping()
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT')")
     public ResponseEntity<AppointmentResponseDTO> create(@Valid @RequestBody AppointmentRequestDTO dto){
         AppointmentResponseDTO response = appointmentService.create(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/barber/{barberId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BARBER')")
     public ResponseEntity<Page<AppointmentResponseDTO>> findByBarberAndDateRange(
             @PathVariable Long barberId,
             @RequestParam LocalDateTime start,
@@ -66,6 +70,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT')")
     public ResponseEntity<Void> cancel(@PathVariable Long id){
         appointmentService.cancel(id);
         return ResponseEntity.noContent().build();
