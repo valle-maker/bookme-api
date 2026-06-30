@@ -129,7 +129,7 @@ The API will be available at `http://localhost:8080`.
 - [X] Unit and integration tests (JUnit 5 + Mockito)
 - [X] Authentication and authorization (Spring Security + JWT)
 - [ ] API documentation (Swagger / OpenAPI)
-- [ ] Docker containerization
+- [X] Docker containerization
 - [ ] Cloud deployment
 
 ## Author
