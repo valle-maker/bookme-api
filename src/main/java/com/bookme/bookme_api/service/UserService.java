@@ -84,6 +84,7 @@ public class UserService {
         entity.setLastName(dto.getLastName());
         entity.setEmail(dto.getEmail());
         entity.setPhone(dto.getPhone());
+        entity.setRole(dto.getRole());
 
        
         UserEntity updated = userRepo.save(entity);
