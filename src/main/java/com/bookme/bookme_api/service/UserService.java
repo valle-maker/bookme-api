@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class UserService {
 
     private final UserRepository userRepo;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
 
     @Transactional
@@ -36,6 +38,7 @@ public class UserService {
         }
         
         UserEntity entity = userMapper.toEntity(dto);
+        entity.setPassword(passwordEncoder.encode(dto.getPassword()));
         entity.setActive(true);
         UserEntity inserted = userRepo.save(entity);
         return userMapper.toResponseDTO(inserted);
