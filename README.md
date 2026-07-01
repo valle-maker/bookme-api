@@ -122,7 +122,23 @@ spring.jpa.show-sql=true
 ./mvnw spring-boot:run
 ```
 
-The API will be available at `http://localhost:8080`.
+The API will be available at `https://bookme-api-production.up.railway.app/api/v1/auth/register`. 
+
+### Quick test
+
+1. Register a user:
+```bash
+curl -X POST https://bookme-api-production.up.railway.app/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test","lastName":"User","email":"test@mail.com","phone":"3001111111","password":"password123"}'
+```
+
+2. Copy the token from the response
+
+3. Use the token to access protected endpoints:
+```bash
+curl https://bookme-api-production.up.railway.app/api/v1/barbers \
+  -H "Authorization: Bearer YOU
 
 ## Roadmap
 
@@ -130,7 +146,7 @@ The API will be available at `http://localhost:8080`.
 - [X] Authentication and authorization (Spring Security + JWT)
 - [ ] API documentation (Swagger / OpenAPI)
 - [X] Docker containerization
-- [ ] Cloud deployment
+- [X] Cloud deployment
 
 ## Author
 
