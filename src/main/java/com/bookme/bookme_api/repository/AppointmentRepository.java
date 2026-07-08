@@ -3,8 +3,6 @@ package com.bookme.bookme_api.repository;
 
 import java.time.LocalDateTime;
 
-
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,4 +22,9 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
         Status status,
         LocalDateTime newEnd,
         LocalDateTime newStart );
+    
+    Page<AppointmentEntity> findByClientEmail(String email, Pageable pageable);
+
+
+    Page<AppointmentEntity> findByBarberUserEmail(String email, Pageable pageable);
 }

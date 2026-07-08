@@ -154,4 +154,16 @@ public class AppointmentService {
         
     }
 
+    public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
+        return appointmentRepository
+            .findByClientEmail(email, pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
+
+    public Page<AppointmentResponseDTO> getByBarberEmail(String email, Pageable pageable) {
+        return appointmentRepository
+            .findByBarberUserEmail(email, pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
+
 }

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -75,6 +76,25 @@ public class AppointmentController {
         appointmentService.cancel(id);
         return ResponseEntity.noContent().build();
     } 
+
+    // "Mis citas" — CLIENT obtiene sus propias citas usando su email del JWT
+        @GetMapping("/my")
+        @PreAuthorize("hasRole('CLIENT')")
+        public ResponseEntity<Page<AppointmentResponseDTO>> getMyAppointments(
+            Authentication authentication,
+            Pageable pageable) {
+        String email = authentication.getName(); // = sub del JWT = email
+        return ResponseEntity.ok(appointmentService.getByClientEmail(email, pageable));
+    }
+
+    @GetMapping("/my-schedule")
+    @PreAuthorize("hasRole('BARBER')")
+    public ResponseEntity<Page<AppointmentResponseDTO>> getMySchedule(
+            Authentication authentication,
+            Pageable pageable) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(appointmentService.getByBarberEmail(email, pageable));
+    }
 }
 
 
