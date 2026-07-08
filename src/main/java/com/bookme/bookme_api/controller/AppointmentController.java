@@ -71,7 +71,7 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> cancel(@PathVariable Long id){
         appointmentService.cancel(id);
         return ResponseEntity.noContent().build();
@@ -100,6 +100,17 @@ public class AppointmentController {
     public ResponseEntity<Page<AppointmentResponseDTO>> getAll(Pageable pageable) {
         return ResponseEntity.ok(appointmentService.getAll(pageable));
     }
+
+    @DeleteMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<Void> cancelMyAppointment(
+        @PathVariable Long id,
+        Authentication authentication
+        ) {
+        appointmentService.cancelMyAppointment(id, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+    
 }
 
 

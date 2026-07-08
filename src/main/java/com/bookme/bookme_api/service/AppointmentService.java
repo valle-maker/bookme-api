@@ -153,6 +153,37 @@ public class AppointmentService {
         appointmentRepository.save(entity);
         
     }
+    @Transactional
+    public void cancelMyAppointment(Long id, String email){
+        AppointmentEntity entity = appointmentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+        
+        //Manejar una mejor exeption aquí
+        if(!entity.getClient().getEmail().equals(email)){
+            throw new InvalidOperationException("You can only cancel your own appointments");
+        }
+
+        //Toda esta lógica esta dos veces, crear un método para resumir todas estas validaciones
+        
+        if(entity.getStatus() == Status.CANCELLED){
+            throw new InvalidOperationException("Appointment is already cancelled");
+        }
+    
+        if(entity.getStatus() != Status.SCHEDULED){
+            throw new InvalidOperationException("Only scheduled appointments can be cancelled");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime appointmentStart = entity.getStartDateTime();
+        
+        if(appointmentStart.isBefore(now.plusHours(1))){
+            throw new InvalidOperationException("Cannot cancel less than 1 hour before the appointment");
+        }
+    
+        entity.setStatus(Status.CANCELLED);
+        appointmentRepository.save(entity);
+        
+    }
 
     public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
         return appointmentRepository
