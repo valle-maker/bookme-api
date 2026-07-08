@@ -77,7 +77,7 @@ public class AppointmentController {
         return ResponseEntity.noContent().build();
     } 
 
-    // "Mis citas" — CLIENT obtiene sus propias citas usando su email del JWT
+    
         @GetMapping("/my")
         @PreAuthorize("hasRole('CLIENT')")
         public ResponseEntity<Page<AppointmentResponseDTO>> getMyAppointments(
@@ -94,6 +94,11 @@ public class AppointmentController {
             Pageable pageable) {
         String email = authentication.getName();
         return ResponseEntity.ok(appointmentService.getByBarberEmail(email, pageable));
+    }
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<AppointmentResponseDTO>> getAll(Pageable pageable) {
+        return ResponseEntity.ok(appointmentService.getAll(pageable));
     }
 }
 

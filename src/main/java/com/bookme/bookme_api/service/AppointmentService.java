@@ -165,5 +165,10 @@ public class AppointmentService {
             .findByBarberUserEmail(email, pageable)
             .map(appointmentMapper::toResponseDTO);
     }
+    public Page<AppointmentResponseDTO> getAll(Pageable pageable) {
+        return appointmentRepository
+            .findAll(pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
 
 }
