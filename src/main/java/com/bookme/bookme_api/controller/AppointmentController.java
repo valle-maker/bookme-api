@@ -110,6 +110,17 @@ public class AppointmentController {
         appointmentService.cancelMyAppointment(id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/my")
+@PreAuthorize("hasRole('CLIENT')")
+public ResponseEntity<AppointmentResponseDTO> createMyAppointment(
+        @Valid @RequestBody AppointmentRequestDTO dto,
+        Authentication authentication) {
+
+    AppointmentResponseDTO response =
+            appointmentService.createMyAppointment(dto, authentication.getName());
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+}
     
 }
 

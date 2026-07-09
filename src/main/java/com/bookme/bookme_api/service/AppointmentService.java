@@ -202,4 +202,60 @@ public class AppointmentService {
             .map(appointmentMapper::toResponseDTO);
     }
 
+    @Transactional
+public AppointmentResponseDTO createMyAppointment(AppointmentRequestDTO dto, String email) {
+
+    UserEntity userEntity = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    if (!userEntity.isActive()) {
+        throw new InvalidOperationException("User is not active");
+    }
+
+    BarberEntity barberEntity = barberRepository.findById(dto.getBarberId())
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+
+    if (!barberEntity.isActive()) {
+        throw new InvalidOperationException("Barber is not active");
+    }
+
+    BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+
+    if (!barberServiceEntity.isActive()) {
+        throw new InvalidOperationException("Service is not active");
+    }
+
+    LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
+    LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+
+    LocalTime appointmentStart = startTime.toLocalTime();
+    LocalTime appointmentEnd = endTime.toLocalTime();
+
+    if (appointmentStart.isBefore(barberEntity.getWorkStartTime())
+            || appointmentEnd.isAfter(barberEntity.getWorkEndTime())) {
+        throw new InvalidOperationException("Appointment is outside barber's working hours");
+    }
+
+    if (appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
+            barberEntity.getId(),
+            Status.SCHEDULED,
+            endTime,
+            startTime)) {
+        throw new InvalidOperationException("Barber already has an appointment during this time slot");
+    }
+
+    AppointmentEntity entity = appointmentMapper.toEntity(dto);
+
+    entity.setClient(userEntity); // <-- aquí está la diferencia
+    entity.setBarber(barberEntity);
+    entity.setService(barberServiceEntity);
+    entity.setStatus(Status.SCHEDULED);
+    entity.setStartDateTime(startTime);
+    entity.setEndDateTime(endTime);
+
+    AppointmentEntity created = appointmentRepository.save(entity);
+    return appointmentMapper.toResponseDTO(created);
+}
+
 }
