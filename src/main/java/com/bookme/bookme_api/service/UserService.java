@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bookme.bookme_api.dto.profile.ProfileUpdateRequestDTO;
 import com.bookme.bookme_api.dto.user.UserRequestDTO;
 import com.bookme.bookme_api.dto.user.UserResponseDTO;
 import com.bookme.bookme_api.entity.UserEntity;
@@ -104,6 +105,25 @@ public class UserService {
         userRepo.save(entity);
    }
 
+   @Transactional
+   public UserResponseDTO updateMe(ProfileUpdateRequestDTO dto, String email){
+    UserEntity entity  = userRepo.findByEmail(email).
+        orElseThrow(()->new ResourceNotFoundException("User not found"));
+
+        entity.setName(dto.getName());
+        entity.setLastName(dto.getLastName());
+        entity.setPhone(dto.getPhone());
+
+        UserEntity updated = userRepo.save(entity);
+        return userMapper.toResponseDTO(updated);
+    
+   }
+   public UserResponseDTO getByEmail(String email) {
+    UserEntity entity = userRepo.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+    return userMapper.toResponseDTO(entity);
+    }
 
 
 

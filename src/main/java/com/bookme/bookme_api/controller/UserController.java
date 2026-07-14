@@ -3,6 +3,7 @@ package com.bookme.bookme_api.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bookme.bookme_api.dto.profile.ProfileUpdateRequestDTO;
 import com.bookme.bookme_api.dto.user.UserRequestDTO;
 import com.bookme.bookme_api.dto.user.UserResponseDTO;
 import com.bookme.bookme_api.service.UserService;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,5 +74,26 @@ public class UserController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
+    public ResponseEntity<UserResponseDTO> updateMe(
+        @Valid @RequestBody ProfileUpdateRequestDTO dto,
+        Authentication authentication) {
+
+    UserResponseDTO response =
+            userService.updateMe(dto, authentication.getName());
+
+    return ResponseEntity.ok(response);
+    }
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
+    public ResponseEntity<UserResponseDTO> getMe(Authentication authentication) {
+
+        UserResponseDTO response =
+                userService.getByEmail(authentication.getName());
+
+        return ResponseEntity.ok(response);
+        }
     
 }
