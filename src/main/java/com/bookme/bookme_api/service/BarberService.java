@@ -29,79 +29,79 @@ public class BarberService {
 
 
     @Transactional
-    public BarberResponseDTO create(BarberRequestDTO dto){
-        UserEntity userEntity = userRepo.findById(dto.getUserId()).
-        orElseThrow(()-> new ResourceNotFoundException("User not found"));
+    public BarberResponseDTO create(BarberRequestDTO dto) {
+        UserEntity userEntity = userRepo.findById(dto.getUserId())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        if(!userEntity.isActive()){
-            throw new InvalidOperationException("User unavailable"); 
+        if (!userEntity.isActive()) {
+            throw new InvalidOperationException("User unavailable");
         }
 
-        if(userEntity.getRole() != Role.BARBER){
-            throw new InvalidOperationException("User is not a barber"); 
+        // ADMIN puede actuar como barbero ademas de su rol de administrador.
+        // Solo se bloquean los roles CLIENT, ya que no tiene sentido registrar
+        // un cliente como barbero.
+        if (userEntity.getRole() == Role.CLIENT) {
+            throw new InvalidOperationException("A CLIENT user cannot be registered as a barber");
         }
-        if(barberRepo.findByUser(userEntity).isPresent()){
-            throw new DuplicateResourceException(
-                "This user is already a barber");
-            }
-        if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
-            throw new InvalidOperationException( 
-            "Start time must be before end time");
-            }
+
+        if (barberRepo.findByUser(userEntity).isPresent()) {
+            throw new DuplicateResourceException("This user is already registered as a barber");
+        }
+
+        if (!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())) {
+            throw new InvalidOperationException("Start time must be before end time");
+        }
+
         BarberEntity barberEntity = barberMapper.toEntity(dto);
         barberEntity.setUser(userEntity);
         barberEntity.setActive(true);
-        
+
         BarberEntity created = barberRepo.save(barberEntity);
         return barberMapper.toResponseDTO(created);
-
     }
 
-    public BarberResponseDTO getById(Long id){
-        BarberEntity entity = barberRepo.findById(id).
-            orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
-            return barberMapper.toResponseDTO(entity);
+    public BarberResponseDTO getById(Long id) {
+        BarberEntity entity = barberRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+        return barberMapper.toResponseDTO(entity);
     }
 
-    public Page<BarberResponseDTO> getAllActive(Pageable pageable){
+    public Page<BarberResponseDTO> getAllActive(Pageable pageable) {
         return barberRepo.findByActiveTrue(pageable)
             .map(barberMapper::toResponseDTO);
     }
 
     @Transactional
-    public BarberResponseDTO update(Long id, BarberRequestDTO dto){
-        BarberEntity entity = barberRepo.findById(id).
-            orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
-        
-        if(!entity.isActive()){
+    public BarberResponseDTO update(Long id, BarberRequestDTO dto) {
+        BarberEntity entity = barberRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+
+        if (!entity.isActive()) {
             throw new InvalidOperationException("Barber is not active");
         }
-        if(!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())){
-        throw new InvalidOperationException(
-            "Start time must be before end time");
-            }
+
+        if (!dto.getWorkStartTime().isBefore(dto.getWorkEndTime())) {
+            throw new InvalidOperationException("Start time must be before end time");
+        }
 
         entity.setSpecialities(dto.getSpecialities());
         entity.setWorkStartTime(dto.getWorkStartTime());
         entity.setWorkEndTime(dto.getWorkEndTime());
 
         BarberEntity updated = barberRepo.save(entity);
-
         return barberMapper.toResponseDTO(updated);
-
     }
 
     @Transactional
-    public void deactivate(Long id){
-        BarberEntity entity = barberRepo.findById(id).
-            orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
-        
-        if(!entity.isActive()){
+    public void deactivate(Long id) {
+        BarberEntity entity = barberRepo.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+
+        if (!entity.isActive()) {
             throw new InvalidOperationException("Barber already deactivated");
         }
 
         entity.setActive(false);
         barberRepo.save(entity);
     }
-
 }
