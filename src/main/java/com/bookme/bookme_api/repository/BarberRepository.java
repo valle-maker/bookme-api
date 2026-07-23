@@ -9,12 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.bookme.bookme_api.entity.BarberEntity;
 import com.bookme.bookme_api.entity.UserEntity;
 
+public interface BarberRepository extends JpaRepository<BarberEntity, Long> {
 
+    Page<BarberEntity> findByActiveTrue(Pageable pageable);
 
-
-public interface BarberRepository extends JpaRepository<BarberEntity, Long>{
-
-    Page<BarberEntity>  findByActiveTrue(Pageable pageable);
     Optional<BarberEntity> findByUser(UserEntity user);
 
+    /** Usado por AppointmentService.createWalkIn para resolver el barbero desde el email del JWT. */
+    Optional<BarberEntity> findByUserEmail(String email);
 }

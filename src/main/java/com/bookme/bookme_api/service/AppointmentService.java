@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bookme.bookme_api.dto.appointment.AppointmentRequestDTO;
 import com.bookme.bookme_api.dto.appointment.AppointmentResponseDTO;
+import com.bookme.bookme_api.dto.appointment.WalkInRequestDTO;
 import com.bookme.bookme_api.entity.AppointmentEntity;
 import com.bookme.bookme_api.entity.BarberEntity;
 import com.bookme.bookme_api.entity.BarberServiceEntity;
@@ -22,7 +23,6 @@ import com.bookme.bookme_api.repository.AppointmentRepository;
 import com.bookme.bookme_api.repository.BarberRepository;
 import com.bookme.bookme_api.repository.BarberServiceRepository;
 import com.bookme.bookme_api.repository.UserRepository;
-
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,49 +37,32 @@ public class AppointmentService {
     private final BarberServiceRepository barberServiceRepository;
 
     @Transactional
-    public AppointmentResponseDTO create(AppointmentRequestDTO dto){
-        UserEntity userEntity = userRepository.findById(dto.getClientId()).
-            orElseThrow(()-> new ResourceNotFoundException("User not found"));
-        if(!userEntity.isActive()){
-                throw new InvalidOperationException("User is not active");
-            }
-        
-        BarberEntity barberEntity = barberRepository.findById(dto.getBarberId()).
-            orElseThrow(()-> new ResourceNotFoundException("Barber not found"));
-        if(!barberEntity.isActive()){
-        throw new InvalidOperationException("Barber is not active");
-            }
-        
-        
-
-        BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId()).
-            orElseThrow(()-> new ResourceNotFoundException("Service not found"));
-
-        
-        if(!barberServiceEntity.isActive()){
-        throw new InvalidOperationException("Service is not active");
-            }
-        
-        LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
-        LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
-        
-        LocalTime appointmentStart = startTime.toLocalTime(); 
-        LocalTime appointmentEnd = endTime.toLocalTime();
-
-        if(appointmentStart.isBefore(barberEntity.getWorkStartTime()) || appointmentEnd.isAfter(barberEntity.getWorkEndTime())){
-            throw new InvalidOperationException("Appointment is outside barber's working hours");
+    public AppointmentResponseDTO create(AppointmentRequestDTO dto) {
+        UserEntity userEntity = userRepository.findById(dto.getClientId())
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!userEntity.isActive()) {
+            throw new InvalidOperationException("User is not active");
         }
 
-        if(appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
-            barberEntity.getId(),
-            Status.SCHEDULED,
-            endTime,
-            startTime)){
-                throw new InvalidOperationException("Barber already has an appointment during this time slot");
-            }
+        BarberEntity barberEntity = barberRepository.findById(dto.getBarberId())
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+        if (!barberEntity.isActive()) {
+            throw new InvalidOperationException("Barber is not active");
+        }
+
+        BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+        if (!barberServiceEntity.isActive()) {
+            throw new InvalidOperationException("Service is not active");
+        }
+
+        LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
+        LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+
+        validateWithinWorkingHours(barberEntity, startTime, endTime);
+        validateNoOverlap(barberEntity.getId(), startTime, endTime);
 
         AppointmentEntity entity = appointmentMapper.toEntity(dto);
-        
         entity.setClient(userEntity);
         entity.setBarber(barberEntity);
         entity.setService(barberServiceEntity);
@@ -87,38 +70,174 @@ public class AppointmentService {
         entity.setStartDateTime(startTime);
         entity.setEndDateTime(endTime);
 
-        AppointmentEntity created = appointmentRepository.save(entity);
-        return appointmentMapper.toResponseDTO(created);
-
+        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
     }
-    
-    public AppointmentResponseDTO getById(Long id){
+
+    public AppointmentResponseDTO getById(Long id) {
         AppointmentEntity entity = appointmentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
         return appointmentMapper.toResponseDTO(entity);
     }
 
-
     public Page<AppointmentResponseDTO> findByBarberIdAndStartDateTimeBetween(
-        Long barberId,
-        LocalDateTime start,
-        LocalDateTime end,
-        Pageable pageable) {
+        Long barberId, LocalDateTime start, LocalDateTime end, Pageable pageable) {
 
         validateDateRange(start, end);
-
         barberRepository.findById(barberId)
-        .orElseThrow(() ->
-            new ResourceNotFoundException("Barber not found"));
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
 
         return appointmentRepository
-            .findByBarberIdAndStartDateTimeBetween(
-             barberId,
-                 start,
-                end,
-                pageable)
+            .findByBarberIdAndStartDateTimeBetween(barberId, start, end, pageable)
             .map(appointmentMapper::toResponseDTO);
+    }
+
+    @Transactional
+    public void cancel(Long id) {
+        AppointmentEntity entity = appointmentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+        validateCancellable(entity);
+        entity.setStatus(Status.CANCELLED);
+        appointmentRepository.save(entity);
+    }
+
+    @Transactional
+    public void cancelMyAppointment(Long id, String email) {
+        AppointmentEntity entity = appointmentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+
+        if (!entity.getClient().getEmail().equals(email)) {
+            throw new InvalidOperationException("You can only cancel your own appointments");
         }
+
+        validateCancellable(entity);
+        entity.setStatus(Status.CANCELLED);
+        appointmentRepository.save(entity);
+    }
+
+    public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
+        return appointmentRepository.findByClientEmail(email, pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
+
+    public Page<AppointmentResponseDTO> getByBarberEmail(String email, Pageable pageable) {
+        return appointmentRepository.findByBarberUserEmail(email, pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
+
+    public Page<AppointmentResponseDTO> getAll(Pageable pageable) {
+        return appointmentRepository.findAll(pageable)
+            .map(appointmentMapper::toResponseDTO);
+    }
+
+    @Transactional
+    public AppointmentResponseDTO createMyAppointment(AppointmentRequestDTO dto, String email) {
+        UserEntity userEntity = userRepository.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (!userEntity.isActive()) {
+            throw new InvalidOperationException("User is not active");
+        }
+
+        BarberEntity barberEntity = barberRepository.findById(dto.getBarberId())
+            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
+        if (!barberEntity.isActive()) {
+            throw new InvalidOperationException("Barber is not active");
+        }
+
+        BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+        if (!barberServiceEntity.isActive()) {
+            throw new InvalidOperationException("Service is not active");
+        }
+
+        LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
+        LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+
+        validateWithinWorkingHours(barberEntity, startTime, endTime);
+        validateNoOverlap(barberEntity.getId(), startTime, endTime);
+
+        AppointmentEntity entity = appointmentMapper.toEntity(dto);
+        entity.setClient(userEntity);
+        entity.setBarber(barberEntity);
+        entity.setService(barberServiceEntity);
+        entity.setStatus(Status.SCHEDULED);
+        entity.setStartDateTime(startTime);
+        entity.setEndDateTime(endTime);
+
+        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
+    }
+
+    /**
+     * Crea una cita presencial (walk-in) iniciada por el barbero autenticado.
+     * El barberId se resuelve desde el JWT — el cliente elige quien atiende.
+     */
+    @Transactional
+    public AppointmentResponseDTO createWalkIn(WalkInRequestDTO dto, String barberEmail) {
+        BarberEntity barberEntity = barberRepository.findByUserEmail(barberEmail)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "No se encontro un perfil de barbero para este usuario"));
+        if (!barberEntity.isActive()) {
+            throw new InvalidOperationException("Barber is not active");
+        }
+
+        UserEntity clientEntity = userRepository.findById(dto.getClientId())
+            .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+        if (!clientEntity.isActive()) {
+            throw new InvalidOperationException("Client is not active");
+        }
+
+        BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId())
+            .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
+        if (!barberServiceEntity.isActive()) {
+            throw new InvalidOperationException("Service is not active");
+        }
+
+        LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
+        LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
+
+        validateWithinWorkingHours(barberEntity, startTime, endTime);
+        validateNoOverlap(barberEntity.getId(), startTime, endTime);
+
+        AppointmentEntity entity = new AppointmentEntity();
+        entity.setClient(clientEntity);
+        entity.setBarber(barberEntity);
+        entity.setService(barberServiceEntity);
+        entity.setStatus(Status.SCHEDULED);
+        entity.setStartDateTime(startTime);
+        entity.setEndDateTime(endTime);
+        entity.setNotes(dto.getNotes());
+
+        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
+    }
+
+    // ─── Helpers privados ────────────────────────────────────────────────────
+
+    private void validateCancellable(AppointmentEntity entity) {
+        if (entity.getStatus() == Status.CANCELLED) {
+            throw new InvalidOperationException("Appointment is already cancelled");
+        }
+        if (entity.getStatus() != Status.SCHEDULED) {
+            throw new InvalidOperationException("Only scheduled appointments can be cancelled");
+        }
+        if (entity.getStartDateTime().isBefore(LocalDateTime.now().plusHours(1))) {
+            throw new InvalidOperationException("Cannot cancel less than 1 hour before the appointment");
+        }
+    }
+
+    private void validateWithinWorkingHours(BarberEntity barber,
+                                             LocalDateTime start, LocalDateTime end) {
+        LocalTime aptStart = start.toLocalTime();
+        LocalTime aptEnd = end.toLocalTime();
+        if (aptStart.isBefore(barber.getWorkStartTime()) || aptEnd.isAfter(barber.getWorkEndTime())) {
+            throw new InvalidOperationException("Appointment is outside barber's working hours");
+        }
+    }
+
+    private void validateNoOverlap(Long barberId, LocalDateTime start, LocalDateTime end) {
+        if (appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
+            barberId, Status.SCHEDULED, end, start)) {
+            throw new InvalidOperationException("Barber already has an appointment during this time slot");
+        }
+    }
 
     private void validateDateRange(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) {
@@ -128,134 +247,4 @@ public class AppointmentService {
             throw new InvalidOperationException("Start date-time cannot be after end date-time");
         }
     }
-
-    @Transactional
-    public void cancel(Long id){
-        AppointmentEntity entity = appointmentRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
-    
-        if(entity.getStatus() == Status.CANCELLED){
-            throw new InvalidOperationException("Appointment is already cancelled");
-        }
-    
-        if(entity.getStatus() != Status.SCHEDULED){
-            throw new InvalidOperationException("Only scheduled appointments can be cancelled");
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime appointmentStart = entity.getStartDateTime();
-        
-        if(appointmentStart.isBefore(now.plusHours(1))){
-            throw new InvalidOperationException("Cannot cancel less than 1 hour before the appointment");
-        }
-    
-        entity.setStatus(Status.CANCELLED);
-        appointmentRepository.save(entity);
-        
-    }
-    @Transactional
-    public void cancelMyAppointment(Long id, String email){
-        AppointmentEntity entity = appointmentRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
-        
-        //Manejar una mejor exeption aquí
-        if(!entity.getClient().getEmail().equals(email)){
-            throw new InvalidOperationException("You can only cancel your own appointments");
-        }
-
-        //Toda esta lógica esta dos veces, crear un método para resumir todas estas validaciones
-        
-        if(entity.getStatus() == Status.CANCELLED){
-            throw new InvalidOperationException("Appointment is already cancelled");
-        }
-    
-        if(entity.getStatus() != Status.SCHEDULED){
-            throw new InvalidOperationException("Only scheduled appointments can be cancelled");
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime appointmentStart = entity.getStartDateTime();
-        
-        if(appointmentStart.isBefore(now.plusHours(1))){
-            throw new InvalidOperationException("Cannot cancel less than 1 hour before the appointment");
-        }
-    
-        entity.setStatus(Status.CANCELLED);
-        appointmentRepository.save(entity);
-        
-    }
-
-    public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
-        return appointmentRepository
-            .findByClientEmail(email, pageable)
-            .map(appointmentMapper::toResponseDTO);
-    }
-
-    public Page<AppointmentResponseDTO> getByBarberEmail(String email, Pageable pageable) {
-        return appointmentRepository
-            .findByBarberUserEmail(email, pageable)
-            .map(appointmentMapper::toResponseDTO);
-    }
-    public Page<AppointmentResponseDTO> getAll(Pageable pageable) {
-        return appointmentRepository
-            .findAll(pageable)
-            .map(appointmentMapper::toResponseDTO);
-    }
-
-    @Transactional
-public AppointmentResponseDTO createMyAppointment(AppointmentRequestDTO dto, String email) {
-
-    UserEntity userEntity = userRepository.findByEmail(email)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-    if (!userEntity.isActive()) {
-        throw new InvalidOperationException("User is not active");
-    }
-
-    BarberEntity barberEntity = barberRepository.findById(dto.getBarberId())
-            .orElseThrow(() -> new ResourceNotFoundException("Barber not found"));
-
-    if (!barberEntity.isActive()) {
-        throw new InvalidOperationException("Barber is not active");
-    }
-
-    BarberServiceEntity barberServiceEntity = barberServiceRepository.findById(dto.getServiceId())
-            .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
-
-    if (!barberServiceEntity.isActive()) {
-        throw new InvalidOperationException("Service is not active");
-    }
-
-    LocalDateTime startTime = dto.getAppointmentDate().atTime(dto.getStartTime());
-    LocalDateTime endTime = startTime.plusMinutes(barberServiceEntity.getDurationMinutes());
-
-    LocalTime appointmentStart = startTime.toLocalTime();
-    LocalTime appointmentEnd = endTime.toLocalTime();
-
-    if (appointmentStart.isBefore(barberEntity.getWorkStartTime())
-            || appointmentEnd.isAfter(barberEntity.getWorkEndTime())) {
-        throw new InvalidOperationException("Appointment is outside barber's working hours");
-    }
-
-    if (appointmentRepository.existsByBarberIdAndStatusAndStartDateTimeLessThanAndEndDateTimeGreaterThan(
-            barberEntity.getId(),
-            Status.SCHEDULED,
-            endTime,
-            startTime)) {
-        throw new InvalidOperationException("Barber already has an appointment during this time slot");
-    }
-
-    AppointmentEntity entity = appointmentMapper.toEntity(dto);
-
-    entity.setClient(userEntity); // <-- aquí está la diferencia
-    entity.setBarber(barberEntity);
-    entity.setService(barberServiceEntity);
-    entity.setStatus(Status.SCHEDULED);
-    entity.setStartDateTime(startTime);
-    entity.setEndDateTime(endTime);
-
-    AppointmentEntity created = appointmentRepository.save(entity);
-    return appointmentMapper.toResponseDTO(created);
-}
-
 }
