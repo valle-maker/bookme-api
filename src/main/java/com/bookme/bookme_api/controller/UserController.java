@@ -3,6 +3,7 @@ package com.bookme.bookme_api.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bookme.bookme_api.dto.profile.ChangePasswordRequestDTO;
 import com.bookme.bookme_api.dto.profile.ProfileUpdateRequestDTO;
 import com.bookme.bookme_api.dto.user.UserRequestDTO;
 import com.bookme.bookme_api.dto.user.UserResponseDTO;
@@ -75,25 +76,28 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
+    public ResponseEntity<UserResponseDTO> getMe(Authentication authentication) {
+        UserResponseDTO response = userService.getByEmail(authentication.getName());
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/me")
     @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
     public ResponseEntity<UserResponseDTO> updateMe(
         @Valid @RequestBody ProfileUpdateRequestDTO dto,
         Authentication authentication) {
-
-    UserResponseDTO response =
-            userService.updateMe(dto, authentication.getName());
-
-    return ResponseEntity.ok(response);
-    }
-    @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
-    public ResponseEntity<UserResponseDTO> getMe(Authentication authentication) {
-
-        UserResponseDTO response =
-                userService.getByEmail(authentication.getName());
-
+        UserResponseDTO response = userService.updateMe(dto, authentication.getName());
         return ResponseEntity.ok(response);
-        }
-    
+    }
+
+    @PutMapping("/me/password")
+    @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
+    public ResponseEntity<Void> changePassword(
+        @Valid @RequestBody ChangePasswordRequestDTO dto,
+        Authentication authentication) {
+        userService.changePassword(dto, authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
 }

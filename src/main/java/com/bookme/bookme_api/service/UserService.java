@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bookme.bookme_api.dto.profile.ChangePasswordRequestDTO;
 import com.bookme.bookme_api.dto.profile.ProfileUpdateRequestDTO;
 import com.bookme.bookme_api.dto.user.UserRequestDTO;
 import com.bookme.bookme_api.dto.user.UserResponseDTO;
@@ -118,12 +119,30 @@ public class UserService {
         return userMapper.toResponseDTO(updated);
     
    }
+
    public UserResponseDTO getByEmail(String email) {
     UserEntity entity = userRepo.findByEmail(email)
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     return userMapper.toResponseDTO(entity);
     }
+
+   @Transactional
+   public void changePassword(ChangePasswordRequestDTO dto, String email) {
+        UserEntity entity = userRepo.findByEmail(email)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), entity.getPassword())) {
+            throw new InvalidOperationException("La contrasena actual es incorrecta");
+        }
+
+        if (passwordEncoder.matches(dto.getNewPassword(), entity.getPassword())) {
+            throw new InvalidOperationException("La nueva contrasena debe ser diferente a la actual");
+        }
+
+        entity.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepo.save(entity);
+   }
 
 
 
