@@ -2,13 +2,11 @@ package com.bookme.bookme_api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 @Service
@@ -18,8 +16,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    private static final String FROM = "bookme.reservas@gmail.com";
 
     // ─── Send helper ──────────────────────────────────────────────────────────
 
@@ -28,7 +25,7 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail, "Bookme Reservas");
+            helper.setFrom(FROM, "Bookme Reservas");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
@@ -101,12 +98,10 @@ public class EmailService {
                 <tr><td align="center">
                   <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:560px;">
 
-                    <!-- Header -->
                     <tr><td style="background:%s;padding:28px 32px;">
                       <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">%s</h1>
                     </td></tr>
 
-                    <!-- Body -->
                     <tr><td style="padding:28px 32px;">
                       <p style="margin:0 0 24px;color:#374151;font-size:15px;">%s</p>
 
@@ -114,32 +109,31 @@ public class EmailService {
                              style="background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
                         <tr>
                           <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;">
-                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Barbero</span><br>
+                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;">Barbero</span><br>
                             <strong style="color:#111827;font-size:15px;">%s</strong>
                           </td>
                         </tr>
                         <tr>
                           <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;">
-                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Servicio</span><br>
+                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;">Servicio</span><br>
                             <strong style="color:#111827;font-size:15px;">%s</strong>
                           </td>
                         </tr>
                         <tr>
                           <td style="padding:12px 16px;border-bottom:1px solid #e5e7eb;">
-                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Fecha</span><br>
+                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;">Fecha</span><br>
                             <strong style="color:#111827;font-size:15px;">%s</strong>
                           </td>
                         </tr>
                         <tr>
                           <td style="padding:12px 16px;">
-                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:.5px;">Horario</span><br>
+                            <span style="color:#6b7280;font-size:12px;text-transform:uppercase;">Horario</span><br>
                             <strong style="color:#111827;font-size:15px;">%s – %s</strong>
                           </td>
                         </tr>
                       </table>
                     </td></tr>
 
-                    <!-- Footer -->
                     <tr><td style="padding:16px 32px 28px;border-top:1px solid #f3f4f6;">
                       <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center;">
                         Bookme · Sistema de reservas para barberías
