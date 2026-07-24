@@ -162,4 +162,53 @@ public class EmailService {
             </html>
             """.formatted(accentColor, title, intro, barberName, serviceName, date, startTime, endTime);
     }
+    public void sendPasswordResetEmail(String clientEmail, String clientName, String resetLink) {
+        String subject = "Recuperar contraseña — Bookme";
+        String body = """
+            <!DOCTYPE html>
+            <html lang="es">
+            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+            <body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
+                <tr><td align="center">
+                  <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:560px;">
+                    <tr><td style="background:#111827;padding:28px 32px;">
+                      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">🔐 Recuperar contraseña</h1>
+                    </td></tr>
+                    <tr><td style="padding:28px 32px;">
+                      <p style="margin:0 0 16px;color:#374151;font-size:15px;">
+                        Hola <strong>%s</strong>, recibimos una solicitud para restablecer tu contraseña.
+                      </p>
+                      <p style="margin:0 0 24px;color:#374151;font-size:15px;">
+                        Haz clic en el botón para crear una nueva contraseña. El enlace es válido por <strong>1 hora</strong>.
+                      </p>
+                      <table cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="border-radius:8px;background:#111827;">
+                            <a href="%s"
+                               style="display:inline-block;padding:14px 28px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:8px;">
+                              Restablecer contraseña
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="margin:24px 0 0;color:#6b7280;font-size:13px;">
+                        Si no solicitaste este cambio, ignora este mensaje.
+                      </p>
+                    </td></tr>
+                    <tr><td style="padding:16px 32px 28px;border-top:1px solid #f3f4f6;">
+                      <p style="margin:0;color:#9ca3af;font-size:12px;text-align:center;">
+                        Bookme · Sistema de reservas para barberías
+                      </p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </body>
+            </html>
+            """.formatted(clientName, resetLink);
+        send(clientEmail, subject, body);
+    }
+
+
 }
