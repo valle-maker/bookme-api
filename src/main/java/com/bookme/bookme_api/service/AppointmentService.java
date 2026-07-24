@@ -2,7 +2,10 @@ package com.bookme.bookme_api.service;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,12 @@ public class AppointmentService {
     private final UserRepository userRepository;
     private final BarberRepository barberRepository;
     private final BarberServiceRepository barberServiceRepository;
+    private final EmailService emailService;
+
+    private static final DateTimeFormatter DATE_FMT =
+        DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'de' yyyy", new Locale("es", "CO"));
+    private static final DateTimeFormatter TIME_FMT =
+        DateTimeFormatter.ofPattern("h:mm a");
 
     @Transactional
     public AppointmentResponseDTO create(AppointmentRequestDTO dto) {
@@ -70,7 +79,9 @@ public class AppointmentService {
         entity.setStartDateTime(startTime);
         entity.setEndDateTime(endTime);
 
-        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
+        AppointmentEntity saved = appointmentRepository.save(entity);
+        sendConfirmation(saved);
+        return appointmentMapper.toResponseDTO(saved);
     }
 
     public AppointmentResponseDTO getById(Long id) {
@@ -98,6 +109,7 @@ public class AppointmentService {
         validateCancellable(entity);
         entity.setStatus(Status.CANCELLED);
         appointmentRepository.save(entity);
+        sendCancellation(entity);
     }
 
     @Transactional
@@ -112,6 +124,7 @@ public class AppointmentService {
         validateCancellable(entity);
         entity.setStatus(Status.CANCELLED);
         appointmentRepository.save(entity);
+        sendCancellation(entity);
     }
 
     @Transactional
@@ -123,6 +136,7 @@ public class AppointmentService {
         }
         entity.setStatus(Status.NO_SHOW);
         appointmentRepository.save(entity);
+        sendNoShow(entity);
     }
 
     public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
@@ -174,7 +188,9 @@ public class AppointmentService {
         entity.setStartDateTime(startTime);
         entity.setEndDateTime(endTime);
 
-        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
+        AppointmentEntity saved = appointmentRepository.save(entity);
+        sendConfirmation(saved);
+        return appointmentMapper.toResponseDTO(saved);
     }
 
     /**
@@ -217,7 +233,47 @@ public class AppointmentService {
         entity.setEndDateTime(endTime);
         entity.setNotes(dto.getNotes());
 
-        return appointmentMapper.toResponseDTO(appointmentRepository.save(entity));
+        AppointmentEntity saved = appointmentRepository.save(entity);
+        sendConfirmation(saved);
+        return appointmentMapper.toResponseDTO(saved);
+    }
+
+    // ─── Email helpers ───────────────────────────────────────────────────────
+
+    private void sendConfirmation(AppointmentEntity e) {
+        emailService.sendAppointmentConfirmation(
+            e.getClient().getEmail(),
+            e.getClient().getName(),
+            e.getBarber().getUser().getName(),
+            e.getService().getName(),
+            e.getStartDateTime().format(DATE_FMT),
+            e.getStartDateTime().format(TIME_FMT),
+            e.getEndDateTime().format(TIME_FMT)
+        );
+    }
+
+    private void sendCancellation(AppointmentEntity e) {
+        emailService.sendAppointmentCancellation(
+            e.getClient().getEmail(),
+            e.getClient().getName(),
+            e.getBarber().getUser().getName(),
+            e.getService().getName(),
+            e.getStartDateTime().format(DATE_FMT),
+            e.getStartDateTime().format(TIME_FMT),
+            e.getEndDateTime().format(TIME_FMT)
+        );
+    }
+
+    private void sendNoShow(AppointmentEntity e) {
+        emailService.sendNoShowNotification(
+            e.getClient().getEmail(),
+            e.getClient().getName(),
+            e.getBarber().getUser().getName(),
+            e.getService().getName(),
+            e.getStartDateTime().format(DATE_FMT),
+            e.getStartDateTime().format(TIME_FMT),
+            e.getEndDateTime().format(TIME_FMT)
+        );
     }
 
     // ─── Helpers privados ────────────────────────────────────────────────────
