@@ -1,5 +1,6 @@
 package com.bookme.bookme_api.dto.appointment;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -23,6 +24,7 @@ public class AppointmentResponseDTO {
 
     private Long serviceId;
     private String serviceName;
+    private BigDecimal price;
 
     private LocalDate appointmentDate;
 

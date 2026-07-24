@@ -114,6 +114,17 @@ public class AppointmentService {
         appointmentRepository.save(entity);
     }
 
+    @Transactional
+    public void markNoShow(Long id) {
+        AppointmentEntity entity = appointmentRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+        if (entity.getStatus() != Status.SCHEDULED) {
+            throw new InvalidOperationException("Only scheduled appointments can be marked as no-show");
+        }
+        entity.setStatus(Status.NO_SHOW);
+        appointmentRepository.save(entity);
+    }
+
     public Page<AppointmentResponseDTO> getByClientEmail(String email, Pageable pageable) {
         return appointmentRepository.findByClientEmail(email, pageable)
             .map(appointmentMapper::toResponseDTO);

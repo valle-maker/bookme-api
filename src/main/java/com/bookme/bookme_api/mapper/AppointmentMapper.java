@@ -26,6 +26,7 @@ public interface AppointmentMapper {
     @Mapping(target = "barberName", source = "barber.user.name")
     @Mapping(target = "serviceId", source = "service.id")
     @Mapping(target = "serviceName", source = "service.name")
+    @Mapping(target = "price", source = "service.price")
     @Mapping(target = "appointmentDate", expression = "java(entity.getStartDateTime().toLocalDate())")
     @Mapping(target = "startTime", expression = "java(entity.getStartDateTime().toLocalTime())")
     @Mapping(target = "endTime", expression = "java(entity.getEndDateTime().toLocalTime())")
