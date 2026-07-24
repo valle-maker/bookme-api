@@ -30,4 +30,10 @@ public interface AppointmentRepository extends JpaRepository<AppointmentEntity, 
 
     /** Usado por el scheduler para marcar citas vencidas como COMPLETED. */
     List<AppointmentEntity> findByStatusAndEndDateTimeBefore(Status status, LocalDateTime threshold);
+
+    /** Usado por el scheduler de recordatorios: citas que empiezan dentro de la ventana dada. */
+    List<AppointmentEntity> findByStatusAndStartDateTimeBetween(
+        Status status,
+        LocalDateTime windowStart,
+        LocalDateTime windowEnd);
 }

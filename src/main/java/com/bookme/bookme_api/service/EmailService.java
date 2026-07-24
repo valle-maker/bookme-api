@@ -83,6 +83,21 @@ public class EmailService {
         send(clientEmail, subject, body);
     }
 
+    public void sendAppointmentReminder(
+            String clientEmail, String clientName,
+            String barberName, String serviceName,
+            String date, String startTime, String endTime) {
+
+        String subject = "⏰ Tu cita es en 2 horas — " + serviceName;
+        String body = buildHtml(
+            "⏰ Recuerda tu cita de hoy",
+            "Hola <strong>" + clientName + "</strong>, tu cita empieza en aproximadamente <strong>2 horas</strong>:",
+            barberName, serviceName, date, startTime, endTime,
+            "#6366f1"
+        );
+        send(clientEmail, subject, body);
+    }
+
     // ─── HTML builder ─────────────────────────────────────────────────────────
 
     private String buildHtml(String title, String intro,
