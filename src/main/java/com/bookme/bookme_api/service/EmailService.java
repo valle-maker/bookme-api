@@ -1,24 +1,32 @@
 package com.bookme.bookme_api.service;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.internet.MimeMessage;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${resend.api-key:}")
+    private String apiKey;
 
-    private static final String FROM = "bookme.reservas@gmail.com";
+    private static final String FROM     = "BookMe <onboarding@resend.dev>";
+    private static final String RESEND_URL = "https://api.resend.com/emails";
 
-    // ─── Templates (cada uno @Async para no bloquear el hilo del request) ────
+    private final HttpClient   httpClient   = HttpClient.newHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // ─── Templates ────────────────────────────────────────────────────────────
 
     @Async
     public void sendAppointmentConfirmation(
@@ -120,18 +128,31 @@ public class EmailService {
         send(clientEmail, "Recuperar contraseña — Bookme", body);
     }
 
-    // ─── Send helper (privado, síncrono) ─────────────────────────────────────
+    // ─── Send (privado, síncrono — ya corre en hilo @Async del caller) ────────
 
-    private void send(String to, String subject, String htmlBody) {
+    private void send(String to, String subject, String html) {
+        if (apiKey == null || apiKey.isBlank()) {
+            log.warn("[Email] RESEND_API_KEY no configurado — omitido: {}", subject);
+            return;
+        }
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(FROM, "Bookme Reservas");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            log.info("[Email] Enviado a {} — {}", to, subject);
+            Map<String, Object> payload = Map.of(
+                "from",    FROM,
+                "to",      List.of(to),
+                "subject", subject,
+                "html",    html
+            );
+            String json = objectMapper.writeValueAsString(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(RESEND_URL))
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            log.info("[Email] Enviado a {} — status: {} body: {}", to, response.statusCode(), response.body());
         } catch (Exception e) {
             log.error("[Email] Error al enviar a {}: {}", to, e.getMessage());
         }
