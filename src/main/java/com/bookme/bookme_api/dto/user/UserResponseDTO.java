@@ -24,5 +24,7 @@ public class UserResponseDTO {
     private Role role;
 
     private LocalDateTime createdAt;
+
+    private boolean active;
     
 }

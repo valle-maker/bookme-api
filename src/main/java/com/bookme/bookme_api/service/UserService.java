@@ -106,6 +106,19 @@ public class UserService {
         userRepo.save(entity);
    }
 
+
+   @Transactional
+   public void activate(Long id){
+        UserEntity entity = userRepo.findById(id).
+        orElseThrow(()-> new ResourceNotFoundException("User not found"));
+        
+        if(entity.isActive()){
+            throw new InvalidOperationException("User is already active");
+        }
+        entity.setActive(true);
+        userRepo.save(entity);
+   }
+
    @Transactional
    public UserResponseDTO updateMe(ProfileUpdateRequestDTO dto, String email){
     UserEntity entity  = userRepo.findByEmail(email).

@@ -76,6 +76,14 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
+
+    @PutMapping("/{id}/activate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> activate(@PathVariable Long id){
+        userService.activate(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('ADMIN', 'CLIENT', 'BARBER')")
     public ResponseEntity<UserResponseDTO> getMe(Authentication authentication) {
